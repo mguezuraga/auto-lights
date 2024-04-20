@@ -1,3 +1,4 @@
+import os
 import sys
 import time
 import logging
@@ -12,15 +13,21 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 
 if __name__ == "__main__":
 
+    if os.geteuid() != 0:
+        sys.exit("uhubctl requires to be ran as root")
+
     weather = Weather()
     phc = PyHubCtl()
 
     while True:
         try:
+            try:
+                sunrise, sunset = weather.get_sunrise_and_sunset()
+            except TypeError as e:
+                sys.exit("Error fetching the sunrise and sunset times")
+
             # Start loop
             print("Press CTRL-C to stop")
-
-            sunrise, sunset = weather.get_sunrise_and_sunset()
 
             current_unix_time = int(time.time())
             if sunrise <= current_unix_time <= sunset:

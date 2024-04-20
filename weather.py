@@ -14,12 +14,20 @@ class Weather:
         self.base_url = "http://api.openweathermap.org/data/2.5/weather"
         self.forecast_url = "http://api.openweathermap.org/data/2.5/forecast"
         self.last_call_date = None
+        self.last_sunrise_and_sunset = None
 
     def is_same_day(self):
-        current_date = datetime.date.today()
-        return current_date == self.last_call_date
+        """Check if the current day is the same as the last call date."""
+        if not self.last_call_date:
+            return False
+        return self.last_call_date == datetime.date.today()
 
     def get_sunrise_and_sunset(self):
+        """Fetch new data if the day has changed or return cached data."""
+        if self.is_same_day():
+            # use cachec data
+            return self.last_sunrise_and_sunset
+
         params = {
             'q': f'{self.city_name},{self.country_code}',
             'appid': self.api_key,
@@ -30,10 +38,13 @@ class Weather:
         data = response.json()
 
         if response.status_code == 200:
-            return int(data['sys']['sunrise']), int(data['sys']['sunset'])
+            self.last_sunrise_and_sunset = int(data['sys']['sunrise']), int(data['sys']['sunset'])
+            self.last_call_date = datetime.date.today()
         else:
             print(f"Error: {data['message']}")
             return None
+        
+        return self.last_sunrise_and_sunset
 
 if __name__ == "__main__":
 
